@@ -83,7 +83,4 @@ La directory `output` contiene sottocartelle per ogni esecuzione, identificate d
 
 [MIT](https://choosealicense.com/licenses/mit/)
 
-## Riferimenti
 
-- Wolsey, L. A. (1998). Integer programming. Wiley.
-- Ahuja, R. K., Magnanti, T. L., & Orlin, J. B. (1993). Network flows: theory, algorithms, and applications.

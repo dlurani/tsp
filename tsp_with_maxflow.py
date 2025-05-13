@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from docplex.mp.model import Model
 from docplex.cp.expression import INFINITY
-
+from itertools import combinations
 import matplotlib.pyplot as plt
 
 
@@ -108,7 +108,7 @@ def addCuts(x,capacity_cuts, tsp_model, nodes, p,output_dir,fase_name="TSP"):
 def TSP(output_dir):
 
     # define number of nodes
-    N = 30
+    N = 10
     nodes = list(range(1, N + 1))
 
     # Generating random coordinates
@@ -150,8 +150,45 @@ def TSP(output_dir):
                 flow -= x[(j, i)]
         tsp_model.add(flow == 0)
 
+
+
     # Minimize the total travel distance
     tsp_model.set_objective("min", sum(x[(i, j)] * c[(i, j)] for i in nodes for j in nodes))
+
+
+
+    if N <=10:
+        logger.info("Corstuzione Vincoli 4  per N <= 10")
+
+        tsp_model_completto=tsp_model.clone()
+        # Vincolo (4): cut-set constraints espliciti per sottoinsiemi piccoli
+        # Evita sottocicli disconnessi
+        for k in range(1, N-1):  # Cardinalità dei sottoinsiemi, aumentabile
+            for S in combinations(nodes, k):
+                S_set = set(S)
+                cut_set = [(i, j) for (i, j) in c if i in S_set and j not in S_set]
+                if cut_set:
+                    tsp_model_completto.add(tsp_model_completto.sum(x[i, j] for (i, j) in cut_set) >= 1, f"cut_S_{'_'.join(map(str, S))}")
+
+        # Risoluzione
+        logger.info("Risoluzione del modello TSP con tutti i vincoli")
+        solution = tsp_model_completto.solve(log_output=True,agent='local')
+
+         # Estraiamo gli archi della soluzione
+        x_copy = {}
+        for var in tsp_model_completto.iter_continuous_vars():
+            if var.name.startswith('x_'):
+                indices = var.name.split('_')[1:]
+                if len(indices) == 2:
+                    i, j = int(indices[0]), int(indices[1])
+                    x_copy[(i, j)] = var
+        edges = [e.name for e in tsp_model_completto.iter_continuous_vars() if e.solution_value > 0]
+        edges = [tuple([int(c) for c in e.split('_')[1:]]) for e in edges]
+        cap = {}
+        for e in edges:
+            cap[e] = x_copy[e].solution_value
+
+        save_plot(nodes, edges, p, solution.objective_value, cap,output_dir,name_file="solutionAllContrains.png")
 
     tsp_model.prettyprint()
     tsp_model.print_information()

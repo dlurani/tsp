@@ -10,6 +10,7 @@ Questo repository contiene implementazioni di algoritmi di ottimizzazione per du
 - docplex (IBM Decision Optimization CPLEX Modeling)
 - Matplotlib
 - NumPy
+- Python 3.11 (default) o inferiore
 
 Per installare le dipendenze:
 
